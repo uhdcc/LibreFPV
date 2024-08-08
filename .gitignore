@@ -12,3 +12,9 @@ Saved
 *.suo
 *.xcodeproj
 *.xcworkspace
+Content/Developers
+Config/DefaultInput.ini
+Packaged
+Build
+/Build
+/Build/WindowsNoEditor

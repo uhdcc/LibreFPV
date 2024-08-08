@@ -10,7 +10,7 @@
  * 
  */
 UCLASS()
-class TEMPLATE_API ALibreFPVGameModeBase : public AGameModeBase
+class LIBREFPV_API ALibreFPVGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
 	

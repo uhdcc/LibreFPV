@@ -8,7 +8,10 @@
 		{
 			"Name": "LibreFPV",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine"
+			]
 		}
 	],
 	"Plugins": [
@@ -54,6 +57,10 @@
 		},
 		{
 			"Name": "GeometryMode",
+			"Enabled": true
+		},
+		{
+			"Name": "RawInput",
 			"Enabled": true
 		}
 	],
