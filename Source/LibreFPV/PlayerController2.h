@@ -4,17 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "Windows/WindowsApplication.h"
 #include "PlayerController2.generated.h"
 
-/**
- * 
- */
 UCLASS()
-class LIBREFPV_API APlayerController2 : public APlayerController/*, public IWindowsMessageHandler*/
+class LIBREFPV_API APlayerController2 : public APlayerController
 {
 	GENERATED_BODY()
 public:
 	void BeginPlay() override;
-	void SetPawn(APawn* InPawn) override;
 };

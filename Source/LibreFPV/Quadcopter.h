@@ -6,7 +6,6 @@
 #include "GameFramework/Pawn.h"
 #include "Quadcopter.generated.h"
 
-class UCurveFloat;
 
 USTRUCT(BlueprintType)
 struct FGamepadProperties {
@@ -29,32 +28,23 @@ struct FGamepadProperties {
 };
 
 UCLASS()
-class LIBREFPV_API AQuadcopter : public APawn
-{
+class LIBREFPV_API AQuadcopter : public APawn{
 	GENERATED_BODY()
-
 public:
-	// Sets default values for this pawn's properties
 	AQuadcopter();
-
-protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	void Throttle(float Input);
 	void Pitch(float Input);
 	void Yaw(float Input);
 	void Roll(float Input);
+	void KeyboardYaw(float Input);
+	void MousePitch(float Input);
+	void MouseRoll(float Input);
 
 	bool GamepadDeadzone(float& AxisInput);
-
 	void GamepadCurve(float& AxisInput);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -71,14 +61,15 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FRotator RotationInput;
-	bool bHasRotationInput;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UCurveFloat* ThrottleCurve;
+	FRotator RelativeInput;
+	bool bHasRelativeRotation;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float MaxSpeed;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float PropellerDistance;
+
+	double MouseSensitivity;
+	void SetMouseSensitivity(double MouseDpi, double CentimetersPer360);
 };

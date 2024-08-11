@@ -3,10 +3,7 @@
 
 #include "Quadcopter.h"
 
-// Sets default values
-AQuadcopter::AQuadcopter()
-{
- 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+AQuadcopter::AQuadcopter() {
 	PrimaryActorTick.bCanEverTick = true;
 
 	QuadcopterCollision = CreateDefaultSubobject<UStaticMeshComponent>("QuadcopterCollision");
@@ -14,37 +11,32 @@ AQuadcopter::AQuadcopter()
 	ThrottleInput = 0.f;
 	ThrottleForce = 1200.f;
 	RotationInput = FRotator::ZeroRotator;
-	bHasRotationInput = false;
-	ThrottleCurve = nullptr;
+	bHasRelativeRotation = false;
 	MaxSpeed = 2000.f;
 	PropellerDistance = 5.f;
 }
 void AQuadcopter::BeginPlay() {
 	Super::BeginPlay();	
+	SetMouseSensitivity(800.0, 16.5);
 }
 void AQuadcopter::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
-	GEngine->AddOnScreenDebugMessage(-1, -1, FColor::Red, LexToString(QuadcopterCollision->GetPhysicsLinearVelocity().Size()));
-
 	if (ThrottleInput > 0.f) {
 		auto InstantaneousForce = FVector(0.f, 0.f, ThrottleInput * ThrottleForce);
-		//auto InstantaneousForce = FVector(
-		//	0.f,
-		//	0.f,
-		//	ThrottleInput * ThrottleForce * ThrottleCurve->GetFloatValue(QuadcopterCollision->GetPhysicsLinearVelocity().Size())
-		//);
 		QuadcopterCollision->AddForceAtLocationLocal(InstantaneousForce, FVector(PropellerDistance, PropellerDistance, 0.f));
 		QuadcopterCollision->AddForceAtLocationLocal(InstantaneousForce, FVector(-PropellerDistance, PropellerDistance, 0.f));
 		QuadcopterCollision->AddForceAtLocationLocal(InstantaneousForce, FVector(PropellerDistance, -PropellerDistance, 0.f));
 		QuadcopterCollision->AddForceAtLocationLocal(InstantaneousForce, FVector(-PropellerDistance, -PropellerDistance, 0.f));
-
 		if (QuadcopterCollision->GetPhysicsLinearVelocity().Size() > MaxSpeed) {
 			QuadcopterCollision->SetPhysicsLinearVelocity(QuadcopterCollision->GetPhysicsLinearVelocity().GetSafeNormal() * MaxSpeed);
 		}
 	}
-	if (bHasRotationInput) {
-		AddActorLocalRotation(RotationInput * DeltaTime);
-		bHasRotationInput = false;
+	if (bHasRelativeRotation) {
+		RelativeInput *= DeltaTime;
+		RotationInput += RelativeInput;
+		AddActorLocalRotation(RotationInput);
+		RotationInput = FRotator::ZeroRotator;
+		bHasRelativeRotation = false;
 	}
 }
 void AQuadcopter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) {
@@ -53,44 +45,53 @@ void AQuadcopter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	PlayerInputComponent->BindAxis("Pitch", this, &AQuadcopter::Pitch);
 	PlayerInputComponent->BindAxis("Yaw", this, &AQuadcopter::Yaw);
 	PlayerInputComponent->BindAxis("Roll", this, &AQuadcopter::Roll);
-
-
+	PlayerInputComponent->BindAxis("KeyboardYaw", this, &AQuadcopter::KeyboardYaw);
+	PlayerInputComponent->BindAxis("MousePitch", this, &AQuadcopter::MousePitch);
+	PlayerInputComponent->BindAxis("MouseRoll", this, &AQuadcopter::MouseRoll);
 }
 void AQuadcopter::Throttle(float Input) {
 	GamepadDeadzone(Input);
 	ThrottleInput = Input;
 }
-
 void AQuadcopter::Pitch(float Input) {
 	if (Input != 0.f) {
 		if (GamepadDeadzone(Input)) {
 			GamepadCurve(Input);
-			RotationInput.Pitch = Input;
-			bHasRotationInput = true;
+			RelativeInput.Pitch += Input;
+			bHasRelativeRotation = true;
 		}
 	}
 }
-
 void AQuadcopter::Yaw(float Input) {
 	if (Input != 0.f) {
 		if (GamepadDeadzone(Input)) {
 			GamepadCurve(Input);
-			RotationInput.Yaw = Input;
-			bHasRotationInput = true;
+			RelativeInput.Yaw += Input;
+			bHasRelativeRotation = true;
 		}
 	}
 }
-
 void AQuadcopter::Roll(float Input) {
 	if (Input != 0.f) {
 		if (GamepadDeadzone(Input)) {
 			GamepadCurve(Input);
-			RotationInput.Roll = Input;
-			bHasRotationInput = true;
+			RelativeInput.Roll += Input;
+			bHasRelativeRotation = true;
 		}
 	}
 }
-
+void AQuadcopter::KeyboardYaw(float Input) {
+	RotationInput.Yaw += Input;
+	bHasRelativeRotation = true;
+}
+void AQuadcopter::MousePitch(float Input) {
+	RotationInput.Pitch += Input * MouseSensitivity;
+	bHasRelativeRotation = true;
+}
+void AQuadcopter::MouseRoll(float Input) {
+	RotationInput.Roll += Input * MouseSensitivity;
+	bHasRelativeRotation = true;
+}
 bool AQuadcopter::GamepadDeadzone(float& AxisInput) {
 	float AbsInput = FMath::Abs(AxisInput);
 	if (AbsInput > GamepadProperties.Deadzone) {
@@ -99,8 +100,9 @@ bool AQuadcopter::GamepadDeadzone(float& AxisInput) {
 	}
 	return false;
 }
-
 void AQuadcopter::GamepadCurve(float& AxisInput) {
 	AxisInput = GamepadProperties.Speed * AxisInput * (GamepadProperties.Precision * FMath::Pow(FMath::Abs(AxisInput), 20.f * GamepadProperties.Transition) + (1.f - GamepadProperties.Precision));
 }
-
+void AQuadcopter::SetMouseSensitivity(double MouseDpi, double CentimetersPer360) {
+	MouseSensitivity = 360.0 / MouseDpi / CentimetersPer360 * 2.54;
+}

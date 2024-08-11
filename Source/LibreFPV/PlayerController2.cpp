@@ -12,13 +12,3 @@ void APlayerController2::BeginPlay() {
 		PlayerCameraManager->DefaultAspectRatio = 1.777777f;
 	}
 }
-void APlayerController2::SetPawn(APawn* InPawn) {
-	Super::SetPawn(InPawn);
-	//if (IsLocalPlayerController()) {
-	//	if (GetPawn()) {
-	//		if (auto Quadcopter = Cast<AQuadcopter>(GetPawn())) {
-	//			InputComponent->BindAxis("Throttle", Quadcopter, &AQuadcopter::Throttle);
-	//		}
-	//	}
-	//}
-}
