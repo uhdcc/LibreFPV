@@ -96,7 +96,7 @@ void AQuadcopter::Roll(float Input) {
 }
 void AQuadcopter::KeyboardYaw(float Input) {
 	if (Input != 0.f && !IsMoveInputIgnored()) {
-		RotationInput.Yaw += Input;
+		RelativeInput.Yaw += Input * 200.f;
 		bHasRelativeRotation = true;
 	}
 }
