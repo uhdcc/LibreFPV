@@ -2,22 +2,31 @@
 
 
 #include "Quadcopter.h"
+#include "Camera/CameraComponent.h"
 
 AQuadcopter::AQuadcopter() {
 	PrimaryActorTick.bCanEverTick = true;
 
 	QuadcopterCollision = CreateDefaultSubobject<UStaticMeshComponent>("QuadcopterCollision");
 	QuadcopterCollision->SetSimulatePhysics(true);
+	RootComponent = QuadcopterCollision;
+
+	QuadcopterCamera = CreateDefaultSubobject<UCameraComponent>("QuadcopterCamera");
+	QuadcopterCamera->bConstrainAspectRatio = true;
+	QuadcopterCamera->FieldOfView = 110.f;
+	QuadcopterCamera->SetRelativeRotation(FRotator(45.f, 0.f, 0.f));
+	QuadcopterCamera->SetupAttachment(RootComponent);
+
 	ThrottleInput = 0.f;
 	ThrottleForce = 1200.f;
 	RotationInput = FRotator::ZeroRotator;
 	bHasRelativeRotation = false;
 	MaxSpeed = 2000.f;
 	PropellerDistance = 5.f;
+	SetMouseSensitivity(800.0, 16.5);
 }
 void AQuadcopter::BeginPlay() {
 	Super::BeginPlay();	
-	SetMouseSensitivity(800.0, 16.5);
 }
 void AQuadcopter::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
@@ -50,11 +59,16 @@ void AQuadcopter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	PlayerInputComponent->BindAxis("MouseRoll", this, &AQuadcopter::MouseRoll);
 }
 void AQuadcopter::Throttle(float Input) {
-	GamepadDeadzone(Input);
-	ThrottleInput = Input;
+	if (!IsMoveInputIgnored()) {
+		GamepadDeadzone(Input);
+		ThrottleInput = Input;
+	}
+	else {
+		ThrottleInput = 0.f;
+	}
 }
 void AQuadcopter::Pitch(float Input) {
-	if (Input != 0.f) {
+	if (Input != 0.f && !IsMoveInputIgnored()) {
 		if (GamepadDeadzone(Input)) {
 			GamepadCurve(Input);
 			RelativeInput.Pitch += Input;
@@ -63,7 +77,7 @@ void AQuadcopter::Pitch(float Input) {
 	}
 }
 void AQuadcopter::Yaw(float Input) {
-	if (Input != 0.f) {
+	if (Input != 0.f && !IsMoveInputIgnored()) {
 		if (GamepadDeadzone(Input)) {
 			GamepadCurve(Input);
 			RelativeInput.Yaw += Input;
@@ -72,7 +86,7 @@ void AQuadcopter::Yaw(float Input) {
 	}
 }
 void AQuadcopter::Roll(float Input) {
-	if (Input != 0.f) {
+	if (Input != 0.f && !IsMoveInputIgnored()) {
 		if (GamepadDeadzone(Input)) {
 			GamepadCurve(Input);
 			RelativeInput.Roll += Input;
@@ -81,16 +95,22 @@ void AQuadcopter::Roll(float Input) {
 	}
 }
 void AQuadcopter::KeyboardYaw(float Input) {
-	RotationInput.Yaw += Input;
-	bHasRelativeRotation = true;
+	if (Input != 0.f && !IsMoveInputIgnored()) {
+		RotationInput.Yaw += Input;
+		bHasRelativeRotation = true;
+	}
 }
 void AQuadcopter::MousePitch(float Input) {
-	RotationInput.Pitch += Input * MouseSensitivity;
-	bHasRelativeRotation = true;
+	if (Input != 0.f && !IsMoveInputIgnored()) {
+		RotationInput.Pitch += Input * MouseSensitivity;
+		bHasRelativeRotation = true;
+	}
 }
 void AQuadcopter::MouseRoll(float Input) {
-	RotationInput.Roll += Input * MouseSensitivity;
-	bHasRelativeRotation = true;
+	if (Input != 0.f && !IsMoveInputIgnored()) {
+		RotationInput.Roll += Input * MouseSensitivity;
+		bHasRelativeRotation = true;
+	}
 }
 bool AQuadcopter::GamepadDeadzone(float& AxisInput) {
 	float AbsInput = FMath::Abs(AxisInput);

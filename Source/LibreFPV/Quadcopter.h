@@ -6,6 +6,7 @@
 #include "GameFramework/Pawn.h"
 #include "Quadcopter.generated.h"
 
+class UCameraComponent;
 
 USTRUCT(BlueprintType)
 struct FGamepadProperties {
@@ -46,6 +47,9 @@ public:
 
 	bool GamepadDeadzone(float& AxisInput);
 	void GamepadCurve(float& AxisInput);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UCameraComponent* QuadcopterCamera;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UStaticMeshComponent* QuadcopterCollision;

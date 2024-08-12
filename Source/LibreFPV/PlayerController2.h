@@ -11,5 +11,6 @@ class LIBREFPV_API APlayerController2 : public APlayerController
 {
 	GENERATED_BODY()
 public:
-	void BeginPlay() override;
+	APlayerController2();
+	virtual void SetPawn(APawn* InPawn) override;
 };

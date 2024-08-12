@@ -8,6 +8,8 @@
 #include "HUD2.generated.h"
 
 class SConstraintCanvas;
+class SQuadcopterSettingsWidget;
+class UInputComponent;
 
 USTRUCT(BlueprintType)
 struct FWaypoint {
@@ -33,9 +35,11 @@ class LIBREFPV_API AHUD2 : public AHUD
 	GENERATED_BODY()
 public:
 	AHUD2();
-	virtual void BeginPlay() override;
 	void Tick(float DeltaTime) override;
 	void DrawHUD() override;
+
+	void CreateHud();
+
 	TSharedPtr<SConstraintCanvas> PlayerSlateHud;
 
 	TSharedPtr<STextBlock> FpsDisplay;
@@ -48,4 +52,8 @@ public:
 	FWaypoint NextCheckpoint;
 	FVector2D RectagleSize;
 	void DrawCheckpointMarker(FWaypoint& Checkpoint, bool bIsGrey = false);
+
+	void ToggleEscapeMenu();
+	bool bEscapeMenuIsOpen;
+	TSharedPtr<SQuadcopterSettingsWidget> EscapeMenu;
 };

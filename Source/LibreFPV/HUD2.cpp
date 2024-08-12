@@ -4,6 +4,8 @@
 #include "HUD2.h"
 #include "Widgets/Layout/SConstraintCanvas.h"
 #include "Engine/Canvas.h"
+#include "SQuadcopterSettingsWidget.h"
+#include "Quadcopter.h"
 
 AHUD2::AHUD2() {
 	SetActorTickEnabled(false);
@@ -13,9 +15,27 @@ AHUD2::AHUD2() {
 	NumberFormat.UseGrouping = false;
 	bShowCheckpointMarkers = false;
 	RectagleSize = FVector2D(20.f);
+	bEscapeMenuIsOpen = false;
 }
-void AHUD2::BeginPlay() {
-	Super::BeginPlay();
+void AHUD2::Tick(float DeltaTime) {
+	Super::Tick(DeltaTime);	
+	FpsBuffer += DeltaTime;
+	FpsSamples++;
+	if (FpsBuffer > 0.03f) {
+		FpsDisplay->SetText(FText::FromString(FText::AsNumber(1.f / (FpsBuffer / FpsSamples), &NumberFormat).ToString() + " FPS"));
+		FpsBuffer = 0.f;
+		FpsSamples = 0;
+	}
+}
+void AHUD2::DrawHUD() {
+	Super::DrawHUD();
+	if (bShowCheckpointMarkers) {
+		DrawCheckpointMarker(CurrentCheckpoint);
+		DrawCheckpointMarker(NextCheckpoint, true);
+	}
+}
+void AHUD2::CreateHud() {
+	InputComponent->BindAction("EscapeMenu", IE_Pressed, this, &AHUD2::ToggleEscapeMenu);
 	GEngine->GameViewport->AddViewportWidgetForPlayer(
 		GetOwningPlayerController()->GetLocalPlayer(),
 		SAssignNew(PlayerSlateHud, SConstraintCanvas),
@@ -35,25 +55,9 @@ void AHUD2::BeginPlay() {
 					.ColorAndOpacity(FLinearColor(0.7f, 0.7f, 0.7f, 1.f))
 				]
 		];
-	if (GetOwningPawn() && GetWorld()) {
+
+	if (GetOwningPawn()) {
 		SetActorTickEnabled(true);
-	}
-}
-void AHUD2::Tick(float DeltaTime) {
-	Super::Tick(DeltaTime);	
-	FpsBuffer += DeltaTime;
-	FpsSamples++;
-	if (FpsBuffer > 0.03f) {
-		FpsDisplay->SetText(FText::FromString(FText::AsNumber(1.f / (FpsBuffer / FpsSamples), &NumberFormat).ToString() + " FPS"));
-		FpsBuffer = 0.f;
-		FpsSamples = 0;
-	}
-}
-void AHUD2::DrawHUD() {
-	Super::DrawHUD();
-	if (bShowCheckpointMarkers) {
-		DrawCheckpointMarker(CurrentCheckpoint);
-		DrawCheckpointMarker(NextCheckpoint, true);
 	}
 }
 void AHUD2::DrawCheckpointMarker(FWaypoint& Checkpoint, bool bIsGrey) {
@@ -71,4 +75,35 @@ void AHUD2::DrawCheckpointMarker(FWaypoint& Checkpoint, bool bIsGrey) {
 			RectagleSize.Y
 		);
 	}
+}
+void AHUD2::ToggleEscapeMenu() {
+	if (bEscapeMenuIsOpen) {
+		EscapeMenu->SetVisibility(EVisibility::Hidden);
+		GetOwningPlayerController()->bShowMouseCursor = false;
+		GetOwningPawn()->EnableInput(GetOwningPlayerController());
+		GetOwningPlayerController()->SetInputMode(FInputModeGameOnly());
+	}
+	else {
+		if (!EscapeMenu) {
+			if (GetOwningPawn()) {
+				if (auto Quadcopter = Cast<AQuadcopter>(GetOwningPawn())) {
+					PlayerSlateHud->AddSlot()
+						.Anchors(FAnchors(1.f, 0.5f, 1.f, 0.5f))
+						.Alignment(FVector2D(1.f, 0.5f))
+						.AutoSize(true)
+						[
+							SAssignNew(EscapeMenu, SQuadcopterSettingsWidget)
+								.Quadcopter(Quadcopter)
+						];
+				}
+			}
+		}
+		else {
+			EscapeMenu->SetVisibility(EVisibility::Visible);
+		}
+		GetOwningPlayerController()->bShowMouseCursor = true;
+		GetOwningPawn()->DisableInput(GetOwningPlayerController());
+		GetOwningPlayerController()->SetInputMode(FInputModeGameAndUI());
+	}
+	bEscapeMenuIsOpen = !bEscapeMenuIsOpen;
 }
