@@ -8,6 +8,9 @@
 
 class UCameraComponent;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FWantsRestartRun, AQuadcopter*, Quadcopter);
+
+
 USTRUCT(BlueprintType)
 struct FGamepadProperties {
 	GENERATED_BODY()
@@ -22,10 +25,10 @@ struct FGamepadProperties {
 	float Deadzone;
 
 	FGamepadProperties() {
-		Speed = 320.f;
-		Precision = 0.8f;
-		Transition = 0.25f;
-		Deadzone = 0.1f;	}
+		Speed = 475.f;
+		Precision = 0.6f;
+		Transition = 0.3f;
+		Deadzone = 0.05f;	}
 };
 
 UCLASS()
@@ -76,4 +79,11 @@ public:
 
 	double MouseSensitivity;
 	void SetMouseSensitivity(double MouseDpi, double CentimetersPer360);
+
+	void RestartRun();
+	FVector InitialLocation;
+	FRotator InitialRotation;
+
+	UPROPERTY(BlueprintAssignable)
+	FWantsRestartRun	WantsRestartRun;
 };

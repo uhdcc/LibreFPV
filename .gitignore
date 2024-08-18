@@ -2,6 +2,11 @@ Binaries
 DerivedDataCache
 Intermediate
 Saved
+Content/Developers
+Packaged
+Build
+Build/WindowsNoEditor
+Config
 .vscode
 .vs
 *.VC.db
@@ -12,8 +17,3 @@ Saved
 *.suo
 *.xcodeproj
 *.xcworkspace
-Content/Developers
-Packaged
-Build
-/Build
-/Build/WindowsNoEditor

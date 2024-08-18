@@ -22,8 +22,11 @@ AQuadcopter::AQuadcopter() {
 	RotationInput = FRotator::ZeroRotator;
 	bHasRelativeRotation = false;
 	MaxSpeed = 2000.f;
-	PropellerDistance = 5.f;
-	SetMouseSensitivity(800.0, 16.5);
+	PropellerDistance = 20.f;
+	SetMouseSensitivity(800.0, 8.0);
+	InitialLocation = FVector::ZeroVector;
+	InitialRotation = FRotator::ZeroRotator;
+
 }
 void AQuadcopter::BeginPlay() {
 	Super::BeginPlay();	
@@ -32,10 +35,15 @@ void AQuadcopter::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 	if (ThrottleInput > 0.f) {
 		auto InstantaneousForce = FVector(0.f, 0.f, ThrottleInput * ThrottleForce);
-		QuadcopterCollision->AddForceAtLocationLocal(InstantaneousForce, FVector(PropellerDistance, PropellerDistance, 0.f));
-		QuadcopterCollision->AddForceAtLocationLocal(InstantaneousForce, FVector(-PropellerDistance, PropellerDistance, 0.f));
-		QuadcopterCollision->AddForceAtLocationLocal(InstantaneousForce, FVector(PropellerDistance, -PropellerDistance, 0.f));
-		QuadcopterCollision->AddForceAtLocationLocal(InstantaneousForce, FVector(-PropellerDistance, -PropellerDistance, 0.f));
+		if (PropellerDistance == 0.f) {
+			QuadcopterCollision->AddForce(InstantaneousForce * 4.f);
+		}
+		else {
+			QuadcopterCollision->AddForceAtLocationLocal(InstantaneousForce, FVector(PropellerDistance, PropellerDistance, 0.f));
+			QuadcopterCollision->AddForceAtLocationLocal(InstantaneousForce, FVector(-PropellerDistance, PropellerDistance, 0.f));
+			QuadcopterCollision->AddForceAtLocationLocal(InstantaneousForce, FVector(PropellerDistance, -PropellerDistance, 0.f));
+			QuadcopterCollision->AddForceAtLocationLocal(InstantaneousForce, FVector(-PropellerDistance, -PropellerDistance, 0.f));
+		}
 		if (QuadcopterCollision->GetPhysicsLinearVelocity().Size() > MaxSpeed) {
 			QuadcopterCollision->SetPhysicsLinearVelocity(QuadcopterCollision->GetPhysicsLinearVelocity().GetSafeNormal() * MaxSpeed);
 		}
@@ -57,6 +65,7 @@ void AQuadcopter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	PlayerInputComponent->BindAxis("KeyboardYaw", this, &AQuadcopter::KeyboardYaw);
 	PlayerInputComponent->BindAxis("MousePitch", this, &AQuadcopter::MousePitch);
 	PlayerInputComponent->BindAxis("MouseRoll", this, &AQuadcopter::MouseRoll);
+	PlayerInputComponent->BindAction("RestartRun", IE_Pressed, this, &AQuadcopter::RestartRun);
 }
 void AQuadcopter::Throttle(float Input) {
 	if (!IsMoveInputIgnored()) {
@@ -125,4 +134,8 @@ void AQuadcopter::GamepadCurve(float& AxisInput) {
 }
 void AQuadcopter::SetMouseSensitivity(double MouseDpi, double CentimetersPer360) {
 	MouseSensitivity = 360.0 / MouseDpi / CentimetersPer360 * 2.54;
+}
+
+void AQuadcopter::RestartRun() {
+	if (WantsRestartRun.IsBound()) WantsRestartRun.Broadcast(this);
 }

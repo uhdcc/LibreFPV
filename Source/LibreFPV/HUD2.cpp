@@ -7,6 +7,7 @@
 #include "SQuadcopterSettingsWidget.h"
 #include "Quadcopter.h"
 
+
 AHUD2::AHUD2() {
 	SetActorTickEnabled(false);
 	FpsBuffer = 0.f;
@@ -36,11 +37,13 @@ void AHUD2::DrawHUD() {
 }
 void AHUD2::CreateHud() {
 	InputComponent->BindAction("EscapeMenu", IE_Pressed, this, &AHUD2::ToggleEscapeMenu);
+	// canvas for all hud widgets
 	GEngine->GameViewport->AddViewportWidgetForPlayer(
 		GetOwningPlayerController()->GetLocalPlayer(),
 		SAssignNew(PlayerSlateHud, SConstraintCanvas),
 		0
 	);
+	// fps display
 	PlayerSlateHud->AddSlot()
 		.Anchors(FAnchors(0.f, 0.f, 0.f, 0.f))
 		.Alignment(FVector2D(0.f, 0.f))
@@ -55,19 +58,40 @@ void AHUD2::CreateHud() {
 					.ColorAndOpacity(FLinearColor(0.7f, 0.7f, 0.7f, 1.f))
 				]
 		];
+	// checkpoint split
+	PlayerSlateHud->AddSlot()
+		.Anchors(FAnchors(0.5f, 0.5f, 0.5f, 0.5f))
+		.Alignment(FVector2D(0.5f, -2.f))
+		.AutoSize(true)
+		[
+			SNew(SBorder)
+				.BorderImage(FCoreStyle::Get().GetBrush("GenericWhiteBox"))
+				.BorderBackgroundColor(FLinearColor(0.02f, 0.02f, 0.02f, 1.f))
+				[
+					SAssignNew(CheckpointSplit, STextBlock)
+						.Font(FCoreStyle::GetDefaultFontStyle("Light", 20))
+						.ColorAndOpacity(FLinearColor(0.7f, 0.7f, 0.7f, 1.f))
+				]
+		];
+
+
 
 	if (GetOwningPawn()) {
 		SetActorTickEnabled(true);
 	}
 }
 void AHUD2::DrawCheckpointMarker(FWaypoint& Checkpoint, bool bIsGrey) {
+	// project checkpoint location to screen
 	auto ScreenSpaceVector = Project(Checkpoint.Location);
+	// if checkpoint is in front of the player...
 	if (ScreenSpaceVector.Z != 0.f) {
+		// determine marker's color
 		bool bIsGreen = false;
 		if (!bIsGrey) {
 			auto DotProduct = FVector::DotProduct(Checkpoint.Location - GetOwningPawn()->GetActorLocation(), Checkpoint.Direction);
 			bIsGreen = (DotProduct > 0.f);
 		}
+		// draw checkpoint marker
 		DrawRect(
 			bIsGrey ? FLinearColor::Gray : bIsGreen ? FLinearColor::Green : FLinearColor::Red,
 			ScreenSpaceVector.X - RectagleSize.X, ScreenSpaceVector.Y - RectagleSize.Y,
@@ -78,6 +102,7 @@ void AHUD2::DrawCheckpointMarker(FWaypoint& Checkpoint, bool bIsGrey) {
 }
 void AHUD2::ToggleEscapeMenu() {
 	if (bEscapeMenuIsOpen) {
+		// hide menu and enable input, hide mouse cursor
 		EscapeMenu->SetVisibility(EVisibility::Hidden);
 		GetOwningPlayerController()->bShowMouseCursor = false;
 		GetOwningPawn()->EnableInput(GetOwningPlayerController());
@@ -87,6 +112,7 @@ void AHUD2::ToggleEscapeMenu() {
 		if (!EscapeMenu) {
 			if (GetOwningPawn()) {
 				if (auto Quadcopter = Cast<AQuadcopter>(GetOwningPawn())) {
+					// create escape menu
 					PlayerSlateHud->AddSlot()
 						.Anchors(FAnchors(1.f, 0.5f, 1.f, 0.5f))
 						.Alignment(FVector2D(1.f, 0.5f))
@@ -99,8 +125,10 @@ void AHUD2::ToggleEscapeMenu() {
 			}
 		}
 		else {
+			// unhide escape menu
 			EscapeMenu->SetVisibility(EVisibility::Visible);
 		}
+		// disable input, show mouse cursor
 		GetOwningPlayerController()->bShowMouseCursor = true;
 		GetOwningPawn()->DisableInput(GetOwningPlayerController());
 		GetOwningPlayerController()->SetInputMode(FInputModeGameAndUI());

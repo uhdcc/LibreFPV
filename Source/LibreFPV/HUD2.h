@@ -43,6 +43,8 @@ public:
 	TSharedPtr<SConstraintCanvas> PlayerSlateHud;
 
 	TSharedPtr<STextBlock> FpsDisplay;
+	TSharedPtr<STextBlock> CheckpointSplit;
+
 	float FpsBuffer;
 	float FpsSamples;
 	FNumberFormattingOptions NumberFormat;

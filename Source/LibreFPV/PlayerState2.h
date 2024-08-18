@@ -15,4 +15,11 @@ public:
 	int NextCheckpointIndex;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	USoundBase* CheckpointSound;
+
+	double RunStartTime;
+
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = PlayerState)
+	TArray<float> CheckpointSplits;
+	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
+
 };
