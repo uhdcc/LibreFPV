@@ -10,23 +10,28 @@
 ACheckpoint::ACheckpoint() {
 	auto TextColor = FLinearColor(0.7f, 0.7f, 0.7f, 1.f);
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
-	CheckpointArrow = CreateDefaultSubobject<UArrowComponent>(TEXT("CheckpointArrow"));
-	CheckpointArrow->SetupAttachment(RootComponent);
-	CheckpointArrow->SetRelativeLocation(FVector(-210.f, 0.f, 14.f));
-	CheckpointArrow->ArrowSize = 2.5f;
+
 	CheckpointTrigger = CreateDefaultSubobject<UBoxComponent>(TEXT("CheckpointTrigger"));
 	CheckpointTrigger->SetupAttachment(RootComponent);
 	CheckpointTrigger->SetCollisionProfileName("OverlapAllDynamic");
+
+	CheckpointArrow = CreateDefaultSubobject<UArrowComponent>(TEXT("CheckpointArrow"));
+	CheckpointArrow->SetupAttachment(CheckpointTrigger);
+	CheckpointArrow->SetRelativeLocation(FVector(-210.f, 0.f, 14.f));
+	CheckpointArrow->ArrowSize = 2.5f;
+
 	CheckpointModel = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CheckpointModel"));
 	CheckpointModel->SetupAttachment(RootComponent);
+
 	CheckpointJerseyNumber = CreateDefaultSubobject<UTextRenderComponent>(TEXT("CheckpointJerseyNumber"));
+	CheckpointJerseyNumber->SetupAttachment(RootComponent);
 	CheckpointJerseyNumber->HorizontalAlignment = EHorizTextAligment::EHTA_Center;
 	CheckpointJerseyNumber->VerticalAlignment = EVerticalTextAligment::EVRTA_TextCenter;
 	CheckpointJerseyNumber->WorldSize = 150.f;
 	CheckpointJerseyNumber->Text = FText::FromString("99");
 	CheckpointJerseyNumber->TextRenderColor = TextColor.ToFColor(false);
-	CheckpointJerseyNumber->SetupAttachment(RootComponent);
 	CheckpointJerseyNumber->SetHiddenInGame(true);
+	CheckpointJerseyNumber->SetUsingAbsoluteRotation(true);
 
 	CheckpointIndex = -1;
 }

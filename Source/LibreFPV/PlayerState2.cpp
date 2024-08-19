@@ -9,6 +9,7 @@ APlayerState2::APlayerState2() {
 	CurrentCheckpointIndex = -1;
 	NextCheckpointIndex = -1;
 	CheckpointSound = nullptr;
+	PersonalBest = 0.f;
 
 	CheckpointSound = LoadObject<USoundBase>(
 		nullptr,
@@ -23,5 +24,7 @@ void APlayerState2::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutL
 	//SharedParams.bIsPushBased = true;
 	SharedParams.bIsPushBased = false;
 	DOREPLIFETIME_WITH_PARAMS_FAST(APlayerState2, CheckpointSplits, SharedParams);
+	DOREPLIFETIME_WITH_PARAMS_FAST(APlayerState2, PersonalBest, SharedParams);
+	DOREPLIFETIME_WITH_PARAMS_FAST(APlayerState2, PersonalBestSplits, SharedParams);
 
 }

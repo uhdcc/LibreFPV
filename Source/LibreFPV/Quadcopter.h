@@ -7,6 +7,7 @@
 #include "Quadcopter.generated.h"
 
 class UCameraComponent;
+class UBoxComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FWantsRestartRun, AQuadcopter*, Quadcopter);
 
@@ -55,7 +56,10 @@ public:
 	UCameraComponent* QuadcopterCamera;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UStaticMeshComponent* QuadcopterCollision;
+	UBoxComponent* QuadcopterCollision;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UStaticMeshComponent* QuadcopterModel;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float ThrottleInput;

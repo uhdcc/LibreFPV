@@ -5,11 +5,15 @@
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
 #include "GameStateBase2.h"
+#include "Checkpoint.h"
+#include "Components/BoxComponent.h"
+#include "Widgets/SCompoundWidget.h"
 #include "HUD2.generated.h"
 
 class SConstraintCanvas;
 class SQuadcopterSettingsWidget;
 class UInputComponent;
+class UTextureRenderTarget2D;
 
 USTRUCT(BlueprintType)
 struct FWaypoint {
@@ -27,6 +31,27 @@ struct FWaypoint {
 		Location = A.GetActorLocation();
 		Direction = A.GetActorForwardVector();
 	}
+	FWaypoint(const ACheckpoint& A) {
+		Location = A.CheckpointTrigger->GetComponentLocation();
+		Direction = A.CheckpointTrigger->GetForwardVector();
+	}
+};
+class LIBREFPV_API SCheckpointSplit : public SCompoundWidget {
+public:
+	SLATE_BEGIN_ARGS(SCheckpointSplit) {
+		}
+	SLATE_END_ARGS()
+
+	void Construct(const FArguments& InArgs);
+	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
+
+
+	TSharedPtr<SBorder> CheckpointSplitBorder;
+	TSharedPtr<STextBlock> CheckpointSplitText;
+	TSharedPtr<FNumberFormattingOptions> NumberFormattingOptions;
+
+	void UpdateCheckpointSplit(float SplitTime);
+	bool bStartFading;
 };
 
 UCLASS()
@@ -43,7 +68,7 @@ public:
 	TSharedPtr<SConstraintCanvas> PlayerSlateHud;
 
 	TSharedPtr<STextBlock> FpsDisplay;
-	TSharedPtr<STextBlock> CheckpointSplit;
+	TSharedPtr<SCheckpointSplit> CheckpointSplit;
 
 	float FpsBuffer;
 	float FpsSamples;

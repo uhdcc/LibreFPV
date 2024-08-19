@@ -20,6 +20,13 @@ public:
 
 	UPROPERTY(Replicated, BlueprintReadOnly, Category = PlayerState)
 	TArray<float> CheckpointSplits;
+	// todo : use the last element of PersonalBestSplits instead of PersonalBest
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = PlayerState)
+	float PersonalBest;
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = PlayerState)
+	TArray<float> PersonalBestSplits;
+
+
 	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 
 };

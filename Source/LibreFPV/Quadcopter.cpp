@@ -3,18 +3,36 @@
 
 #include "Quadcopter.h"
 #include "Camera/CameraComponent.h"
+#include "Components/BoxComponent.h"
 
 AQuadcopter::AQuadcopter() {
 	PrimaryActorTick.bCanEverTick = true;
 
-	QuadcopterCollision = CreateDefaultSubobject<UStaticMeshComponent>("QuadcopterCollision");
+	QuadcopterCollision = CreateDefaultSubobject<UBoxComponent>("QuadcopterCollision");
+	QuadcopterCollision->SetBoxExtent(FVector(38.f, 38.f, 3.5f));
+	QuadcopterCollision->SetCollisionProfileName("BlockAllDynamic");
 	QuadcopterCollision->SetSimulatePhysics(true);
+	QuadcopterCollision->SetLinearDamping(1.f);
+	QuadcopterCollision->SetMassOverrideInKg(NAME_None, 1.f, true);
+	QuadcopterCollision->SetCenterOfMass(FVector(0.f, 0.f, 3.f));
+	QuadcopterCollision->GetBodyInstance()->PositionSolverIterationCount = 16;
+	QuadcopterCollision->GetBodyInstance()->VelocitySolverIterationCount = 8;
+	QuadcopterCollision->GetBodyInstance()->InertiaTensorScale = FVector::ZeroVector;
+	QuadcopterCollision->GetBodyInstance()->StabilizationThresholdMultiplier = 0.f;
 	RootComponent = QuadcopterCollision;
+
+	QuadcopterModel = CreateDefaultSubobject<UStaticMeshComponent>("QuadcopterModel");
+	QuadcopterModel->SetCollisionProfileName("NoCollision");
+	QuadcopterModel->SetOwnerNoSee(true);
+	QuadcopterModel->SetRelativeLocation(FVector(0.f, 0.f, -3.1f));
+	QuadcopterModel->SetupAttachment(RootComponent);
 
 	QuadcopterCamera = CreateDefaultSubobject<UCameraComponent>("QuadcopterCamera");
 	QuadcopterCamera->bConstrainAspectRatio = true;
 	QuadcopterCamera->FieldOfView = 110.f;
 	QuadcopterCamera->SetRelativeRotation(FRotator(45.f, 0.f, 0.f));
+	QuadcopterCamera->SetRelativeLocation(FVector(8.f, 0.f, 4.f));
+	QuadcopterCamera->SetRelativeScale3D(FVector(0.3f));
 	QuadcopterCamera->SetupAttachment(RootComponent);
 
 	ThrottleInput = 0.f;
@@ -26,7 +44,6 @@ AQuadcopter::AQuadcopter() {
 	SetMouseSensitivity(800.0, 8.0);
 	InitialLocation = FVector::ZeroVector;
 	InitialRotation = FRotator::ZeroRotator;
-
 }
 void AQuadcopter::BeginPlay() {
 	Super::BeginPlay();	

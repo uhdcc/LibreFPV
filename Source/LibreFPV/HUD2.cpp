@@ -6,6 +6,7 @@
 #include "Engine/Canvas.h"
 #include "SQuadcopterSettingsWidget.h"
 #include "Quadcopter.h"
+#include "SlateOptMacros.h"
 
 
 AHUD2::AHUD2() {
@@ -36,6 +37,13 @@ void AHUD2::DrawHUD() {
 	}
 }
 void AHUD2::CreateHud() {
+	const auto FontPath = FPaths::Combine(FPaths::EngineContentDir() / TEXT("Slate") / TEXT("Fonts") / "Roboto-Light.ttf");
+	const auto WhiteTexturePath = FPaths::Combine(FPaths::EngineContentDir() / TEXT("Slate") / TEXT("Fonts") / "Roboto-Light.ttf");
+	const auto BorderBrush = new FSlateBrush();
+	BorderBrush->TintColor = FLinearColor::White;
+	auto MediumHudFont = FSlateFontInfo(FontPath, 20);	
+	MediumHudFont.OutlineSettings.OutlineSize = 1;
+
 	InputComponent->BindAction("EscapeMenu", IE_Pressed, this, &AHUD2::ToggleEscapeMenu);
 	// canvas for all hud widgets
 	GEngine->GameViewport->AddViewportWidgetForPlayer(
@@ -51,10 +59,11 @@ void AHUD2::CreateHud() {
 		[
 			SNew(SBorder)
 				.BorderImage(FCoreStyle::Get().GetBrush("GenericWhiteBox"))
+				.Padding(0.f)
 				.BorderBackgroundColor(FLinearColor(0.02f, 0.02f, 0.02f, 1.f))
 				[
 				SAssignNew(FpsDisplay, STextBlock)
-					.Font(FCoreStyle::GetDefaultFontStyle("Light", 20))
+					.Font(MediumHudFont)
 					.ColorAndOpacity(FLinearColor(0.7f, 0.7f, 0.7f, 1.f))
 				]
 		];
@@ -64,14 +73,7 @@ void AHUD2::CreateHud() {
 		.Alignment(FVector2D(0.5f, -2.f))
 		.AutoSize(true)
 		[
-			SNew(SBorder)
-				.BorderImage(FCoreStyle::Get().GetBrush("GenericWhiteBox"))
-				.BorderBackgroundColor(FLinearColor(0.02f, 0.02f, 0.02f, 1.f))
-				[
-					SAssignNew(CheckpointSplit, STextBlock)
-						.Font(FCoreStyle::GetDefaultFontStyle("Light", 20))
-						.ColorAndOpacity(FLinearColor(0.7f, 0.7f, 0.7f, 1.f))
-				]
+			SAssignNew(CheckpointSplit, SCheckpointSplit)
 		];
 
 
@@ -134,4 +136,63 @@ void AHUD2::ToggleEscapeMenu() {
 		GetOwningPlayerController()->SetInputMode(FInputModeGameAndUI());
 	}
 	bEscapeMenuIsOpen = !bEscapeMenuIsOpen;
+}
+BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
+void SCheckpointSplit::Construct(const FArguments& InArgs) {
+	bStartFading = false;
+	NumberFormattingOptions = MakeShareable(new FNumberFormattingOptions());
+	NumberFormattingOptions->SetUseGrouping(false);
+	NumberFormattingOptions->SetAlwaysSign(false);
+
+	const auto FontPath = FPaths::Combine(FPaths::EngineContentDir() / TEXT("Slate") / TEXT("Fonts") / "Roboto-Regular.ttf");
+	auto MediumHudFont = FSlateFontInfo(FontPath, 22);
+	MediumHudFont.OutlineSettings.OutlineSize = 1;
+
+	ChildSlot
+	[
+		SAssignNew(CheckpointSplitBorder, SBorder)
+			.BorderImage(new FSlateBrush())
+			.BorderBackgroundColor(FLinearColor::Transparent)
+			[
+				SAssignNew(CheckpointSplitText, STextBlock)
+					.Font(MediumHudFont)
+					.Margin(0.f)
+					.ColorAndOpacity(FLinearColor(0.7f, 0.7f, 0.7f, 1.f))
+			]
+	];	
+}
+void SCheckpointSplit::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) {
+	if (bStartFading) {
+		RenderOpacity -= InDeltaTime * 4.f;
+		if (RenderOpacity < 0.f) {
+			RenderOpacity = 0.f;
+			bStartFading = false;
+		}
+	}
+	SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
+}
+END_SLATE_FUNCTION_BUILD_OPTIMIZATION
+
+
+void SCheckpointSplit::UpdateCheckpointSplit(float SplitTime) {
+	auto TimespanFormatPattern = FText::FromString("{Sign}{Minutes}:{Seconds}.{Milliseconds}");
+
+	FFormatNamedArguments TimeArguments;
+	const auto bIsPositive = (SplitTime > 0);
+	TimeArguments.Add(TEXT("Sign"), FText::FromString(bIsPositive ? "+" : "-"));
+	SplitTime = FMath::Abs(SplitTime);
+	const auto Minutes = (SplitTime > 60.f) ? FMath::TruncToInt(SplitTime / 60.0f) : 0.f;
+	NumberFormattingOptions->SetMinimumIntegralDigits(2);
+	NumberFormattingOptions->SetMaximumIntegralDigits(2);
+	TimeArguments.Add(TEXT("Minutes"), FText::AsNumber(Minutes, NumberFormattingOptions.Get()));
+	TimeArguments.Add(TEXT("Seconds"), FText::AsNumber(FMath::TruncToInt(SplitTime) % 60, NumberFormattingOptions.Get()));
+	NumberFormattingOptions->SetMinimumIntegralDigits(4);
+	NumberFormattingOptions->SetMaximumIntegralDigits(4);
+	TimeArguments.Add(TEXT("Milliseconds"), FText::AsNumber(FMath::TruncToInt(FMath::Fractional(SplitTime) * 10000), NumberFormattingOptions.Get()));
+	CheckpointSplitText->SetText(FText::Format(TimespanFormatPattern, TimeArguments));
+	auto BorderColor = bIsPositive ? FLinearColor(0.4f, 0.f, 0.f, 0.6f) : FLinearColor(0.f, 0.4f, 0.f, 0.6f);
+	CheckpointSplitBorder->SetBorderBackgroundColor(BorderColor);
+	RenderOpacity = 8.f;
+	bStartFading = true;
+
 }
