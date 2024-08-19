@@ -17,7 +17,7 @@ ACheckpoint::ACheckpoint() {
 
 	CheckpointArrow = CreateDefaultSubobject<UArrowComponent>(TEXT("CheckpointArrow"));
 	CheckpointArrow->SetupAttachment(CheckpointTrigger);
-	CheckpointArrow->SetRelativeLocation(FVector(-210.f, 0.f, 14.f));
+	//CheckpointArrow->SetRelativeLocation(FVector(-210.f, 0.f, 14.f));
 	CheckpointArrow->ArrowSize = 2.5f;
 
 	CheckpointModel = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CheckpointModel"));
