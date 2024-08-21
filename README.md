@@ -7,9 +7,10 @@ the game later. For now I'm focusing on gameplay. It only supports Mouse/Keyboar
 Next thing I'm working on is Radio controller support  
 
 
+
 There are 2 ways to get this game.  
 1. Build from source. If you build the game yourself, you can do anything  
-   like create new tracks, new checkpoints, new quads, etc. Follow the [Quickstart]([url](https://github.com/uhdcc/LibreFPV/blob/main/QuickstartGuide.md)) to build the game.  
+   like create new tracks, new checkpoints, new quads, etc. Follow the [Quickstart](https://github.com/uhdcc/LibreFPV/blob/main/QuickstartGuide.md) to build the game.  
    
 2. You can also just download the "Release" version of the game. This is a Windows executable. The only thing you can do with  
    with the release version is fly around on maps that are included. You can't make maps or do anything else yet,  
