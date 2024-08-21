@@ -52,6 +52,7 @@ public:
 
 	void UpdateCheckpointSplit(float SplitTime);
 	bool bStartFading;
+	float OpacityTicker;
 };
 
 UCLASS()
