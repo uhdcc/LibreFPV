@@ -64,8 +64,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float ThrottleInput;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float ThrottleForce;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FGamepadProperties GamepadProperties;
@@ -79,7 +77,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float MaxSpeed;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float PropellerDistance;
+	float ThrusterForce;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float ThrusterDistance;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float ThrusterOffset;
 
 	double MouseSensitivity;
 	void SetMouseSensitivity(double MouseDpi, double CentimetersPer360);

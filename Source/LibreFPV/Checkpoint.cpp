@@ -17,7 +17,6 @@ ACheckpoint::ACheckpoint() {
 
 	CheckpointArrow = CreateDefaultSubobject<UArrowComponent>(TEXT("CheckpointArrow"));
 	CheckpointArrow->SetupAttachment(CheckpointTrigger);
-	//CheckpointArrow->SetRelativeLocation(FVector(-210.f, 0.f, 14.f));
 	CheckpointArrow->ArrowSize = 2.5f;
 
 	CheckpointModel = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CheckpointModel"));
@@ -121,13 +120,13 @@ void ACheckpoint::ValidateCheckpointIndex() {
 				}
 			}
 			if (bNeedsFixedNumber) {
-				bNeedsFixedNumber = false; // found a missing CheckpointIndex?
+				bNeedsFixedNumber = false;
 				auto TestNumber = -1;
 				Checkpoints.Sort();
 				for (auto i2 : Checkpoints) {
 					if ((i2->CheckpointIndex - TestNumber) > 1) {
 						TestCheckpoint->SetCheckpointIndex(TestNumber + 1);
-						bNeedsFixedNumber = true;
+						bNeedsFixedNumber = true; // found a missing CheckpointIndex
 						break;
 					}
 					TestNumber = i2->CheckpointIndex;
