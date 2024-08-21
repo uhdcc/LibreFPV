@@ -29,21 +29,22 @@ AQuadcopter::AQuadcopter() {
 
 	QuadcopterCamera = CreateDefaultSubobject<UCameraComponent>("QuadcopterCamera");
 	QuadcopterCamera->bConstrainAspectRatio = true;
-	QuadcopterCamera->FieldOfView = 110.f;
-	QuadcopterCamera->SetRelativeRotation(FRotator(45.f, 0.f, 0.f));
+	QuadcopterCamera->FieldOfView = 130.f;
+	QuadcopterCamera->SetRelativeRotation(FRotator(53.f, 0.f, 0.f));
 	QuadcopterCamera->SetRelativeLocation(FVector(8.f, 0.f, 4.f));
 	QuadcopterCamera->SetRelativeScale3D(FVector(0.3f));
 	QuadcopterCamera->SetupAttachment(RootComponent);
 
 	ThrottleInput = 0.f;
-	ThrottleForce = 1200.f;
+	ThrusterForce = 1200.f;
 	RotationInput = FRotator::ZeroRotator;
 	bHasRelativeRotation = false;
 	MaxSpeed = 2000.f;
-	PropellerDistance = 20.f;
+	ThrusterDistance = 7.f;
 	SetMouseSensitivity(800.0, 8.0);
 	InitialLocation = FVector::ZeroVector;
 	InitialRotation = FRotator::ZeroRotator;
+	ThrusterOffset = -2.f;
 }
 void AQuadcopter::BeginPlay() {
 	Super::BeginPlay();	
@@ -51,15 +52,15 @@ void AQuadcopter::BeginPlay() {
 void AQuadcopter::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 	if (ThrottleInput > 0.f) {
-		auto InstantaneousForce = FVector(0.f, 0.f, ThrottleInput * ThrottleForce);
-		if (PropellerDistance == 0.f) {
+		auto InstantaneousForce = FVector(0.f, 0.f, ThrottleInput * ThrusterForce);
+		if (ThrusterDistance == 0.f) {
 			QuadcopterCollision->AddForce(InstantaneousForce * 4.f);
 		}
 		else {
-			QuadcopterCollision->AddForceAtLocationLocal(InstantaneousForce, FVector(PropellerDistance, PropellerDistance, 0.f));
-			QuadcopterCollision->AddForceAtLocationLocal(InstantaneousForce, FVector(-PropellerDistance, PropellerDistance, 0.f));
-			QuadcopterCollision->AddForceAtLocationLocal(InstantaneousForce, FVector(PropellerDistance, -PropellerDistance, 0.f));
-			QuadcopterCollision->AddForceAtLocationLocal(InstantaneousForce, FVector(-PropellerDistance, -PropellerDistance, 0.f));
+			QuadcopterCollision->AddForceAtLocationLocal(InstantaneousForce, FVector(ThrusterDistance, ThrusterDistance, ThrusterOffset));
+			QuadcopterCollision->AddForceAtLocationLocal(InstantaneousForce, FVector(-ThrusterDistance, ThrusterDistance, ThrusterOffset));
+			QuadcopterCollision->AddForceAtLocationLocal(InstantaneousForce, FVector(ThrusterDistance, -ThrusterDistance, ThrusterOffset));
+			QuadcopterCollision->AddForceAtLocationLocal(InstantaneousForce, FVector(-ThrusterDistance, -ThrusterDistance, ThrusterOffset));
 		}
 		if (QuadcopterCollision->GetPhysicsLinearVelocity().Size() > MaxSpeed) {
 			QuadcopterCollision->SetPhysicsLinearVelocity(QuadcopterCollision->GetPhysicsLinearVelocity().GetSafeNormal() * MaxSpeed);

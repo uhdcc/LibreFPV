@@ -70,7 +70,7 @@ void AHUD2::CreateHud() {
 	// checkpoint split
 	PlayerSlateHud->AddSlot()
 		.Anchors(FAnchors(0.5f, 0.5f, 0.5f, 0.5f))
-		.Alignment(FVector2D(0.5f, -2.f))
+		.Alignment(FVector2D(0.5f, -3.5f))
 		.AutoSize(true)
 		[
 			SAssignNew(CheckpointSplit, SCheckpointSplit)
@@ -163,10 +163,14 @@ void SCheckpointSplit::Construct(const FArguments& InArgs) {
 }
 void SCheckpointSplit::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) {
 	if (bStartFading) {
-		RenderOpacity -= InDeltaTime * 4.f;
-		if (RenderOpacity < 0.f) {
-			RenderOpacity = 0.f;
+		OpacityTicker -= InDeltaTime * 4.f;
+		if (OpacityTicker < 0.f) {
+			OpacityTicker = 0.f;
 			bStartFading = false;
+			SetRenderOpacity(OpacityTicker);
+		}
+		else if (OpacityTicker < 1.f) {
+			SetRenderOpacity(OpacityTicker);
 		}
 	}
 	SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
@@ -190,9 +194,9 @@ void SCheckpointSplit::UpdateCheckpointSplit(float SplitTime) {
 	NumberFormattingOptions->SetMaximumIntegralDigits(4);
 	TimeArguments.Add(TEXT("Milliseconds"), FText::AsNumber(FMath::TruncToInt(FMath::Fractional(SplitTime) * 10000), NumberFormattingOptions.Get()));
 	CheckpointSplitText->SetText(FText::Format(TimespanFormatPattern, TimeArguments));
-	auto BorderColor = bIsPositive ? FLinearColor(0.4f, 0.f, 0.f, 0.6f) : FLinearColor(0.f, 0.4f, 0.f, 0.6f);
+	auto BorderColor = bIsPositive ? FLinearColor(0.4f, 0.f, 0.f, 0.5f) : FLinearColor(0.f, 0.4f, 0.f, 0.5f);
 	CheckpointSplitBorder->SetBorderBackgroundColor(BorderColor);
-	RenderOpacity = 8.f;
-	bStartFading = true;
-
+	//OpacityTicker = 12.f;
+	//SetRenderOpacity(1.f);
+	//bStartFading = true;
 }
