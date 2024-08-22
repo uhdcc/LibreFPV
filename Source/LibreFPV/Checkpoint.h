@@ -10,6 +10,8 @@ class UBoxComponent;
 class UArrowComponent;
 class UTextRenderComponent;
 
+//todo : when a checkpoint is deleted, reorder the remaining ones
+
 UCLASS()
 class LIBREFPV_API ACheckpoint : public AActor {
 	GENERATED_BODY()	
@@ -31,6 +33,8 @@ public:
 
 #endif // WITH_EDITOR
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	USceneComponent* CheckpointBeacon;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UBoxComponent* CheckpointTrigger;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

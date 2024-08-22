@@ -92,6 +92,7 @@ void AGameStateBase2::RestartRun(AQuadcopter* Quadcopter) {
 		// initialize player state
 		PlayerState->CurrentCheckpointIndex = 0;
 		PlayerState->NextCheckpointIndex = 1;
+		// todo: dont use FPlatformTime (this is real-world time). Use game time instead, so higher framerates dont trigger checkpoints sooner than low framerates
 		PlayerState->RunStartTime = FPlatformTime::Seconds();
 		// initialize hud
 		if (auto HUD2 = Cast<APlayerController>(Quadcopter->GetInstigatorController())->GetHUD<AHUD2>()) {

@@ -8,6 +8,7 @@
 #include "Checkpoint.h"
 #include "Components/BoxComponent.h"
 #include "Widgets/SCompoundWidget.h"
+#include "Components/ArrowComponent.h"
 #include "HUD2.generated.h"
 
 class SConstraintCanvas;
@@ -32,8 +33,8 @@ struct FWaypoint {
 		Direction = A.GetActorForwardVector();
 	}
 	FWaypoint(const ACheckpoint& A) {
-		Location = A.CheckpointTrigger->GetComponentLocation();
-		Direction = A.CheckpointTrigger->GetForwardVector();
+		Location = A.CheckpointBeacon->GetComponentLocation();
+		Direction = A.CheckpointArrow->GetForwardVector();
 	}
 };
 class LIBREFPV_API SCheckpointSplit : public SCompoundWidget {

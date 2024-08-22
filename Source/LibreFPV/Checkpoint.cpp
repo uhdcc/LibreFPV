@@ -11,6 +11,10 @@ ACheckpoint::ACheckpoint() {
 	auto TextColor = FLinearColor(0.7f, 0.7f, 0.7f, 1.f);
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 
+	CheckpointBeacon = CreateDefaultSubobject<USceneComponent>(TEXT("CheckpointBeacon"));
+	CheckpointBeacon->SetupAttachment(RootComponent);
+
+
 	CheckpointTrigger = CreateDefaultSubobject<UBoxComponent>(TEXT("CheckpointTrigger"));
 	CheckpointTrigger->SetupAttachment(RootComponent);
 	CheckpointTrigger->SetCollisionProfileName("OverlapAllDynamic");
