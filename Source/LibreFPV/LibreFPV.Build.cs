@@ -19,7 +19,9 @@ public class LibreFPV : ModuleRules {
 		PrivateDependencyModuleNames.AddRange(new string[] { 
             "Slate",
             "SlateCore",
-            "NetCore"
+            "NetCore",
+            "JSON",
+            "JsonUtilities"
         });
     }
 }

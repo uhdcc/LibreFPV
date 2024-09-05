@@ -32,8 +32,8 @@ void AHUD2::Tick(float DeltaTime) {
 void AHUD2::DrawHUD() {
 	Super::DrawHUD();
 	if (bShowCheckpointMarkers) {
-		DrawCheckpointMarker(CurrentCheckpoint);
-		DrawCheckpointMarker(NextCheckpoint, true);
+		DrawCheckpointMarker(*CurrentCheckpoint);
+		DrawCheckpointMarker(*NextCheckpoint, true);
 	}
 }
 void AHUD2::CreateHud() {
@@ -82,15 +82,18 @@ void AHUD2::CreateHud() {
 		SetActorTickEnabled(true);
 	}
 }
-void AHUD2::DrawCheckpointMarker(FWaypoint& Checkpoint, bool bIsGrey) {
+void AHUD2::DrawCheckpointMarker(ACheckpoint& Checkpoint, bool bIsGrey) {
 	// project checkpoint location to screen
-	auto ScreenSpaceVector = Project(Checkpoint.Location);
+	auto ScreenSpaceVector = Project(Checkpoint.CheckpointBeacon->GetComponentLocation());
 	// if checkpoint is in front of the player...
 	if (ScreenSpaceVector.Z != 0.f) {
 		// determine marker's color
 		bool bIsGreen = false;
 		if (!bIsGrey) {
-			auto DotProduct = FVector::DotProduct(Checkpoint.Location - GetOwningPawn()->GetActorLocation(), Checkpoint.Direction);
+			auto DotProduct = FVector::DotProduct(
+				Checkpoint.CheckpointBeacon->GetComponentLocation() - GetOwningPawn()->GetActorLocation(), 
+				Checkpoint.CheckpointArrow->GetForwardVector()
+			);
 			bIsGreen = (DotProduct > 0.f);
 		}
 		// draw checkpoint marker

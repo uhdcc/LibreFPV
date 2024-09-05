@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "controlrate_profile.h"
 #include "Quadcopter.generated.h"
 
 class UCameraComponent;
 class UBoxComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FWantsRestartRun, AQuadcopter*, Quadcopter);
-
 
 USTRUCT(BlueprintType)
 struct FGamepadProperties {
@@ -92,4 +92,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FWantsRestartRun	WantsRestartRun;
+
+	bool bUsesLegacyRates;
+	ratesType_e LegacyRatesType;
+	void GamepadInput(float Input, int AxisIndex);
+
 };

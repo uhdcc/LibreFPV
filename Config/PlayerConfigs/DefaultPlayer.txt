@@ -1,0 +1,10 @@
+{
+	"GamepadProperties":
+	{
+		"Speed": 475,
+		"Precision": 0.60000002384185791,
+		"Transition": 0.30000001192092896,
+		"Deadzone": 0.05000000074505806
+	},
+	"FieldOfView": 130
+}

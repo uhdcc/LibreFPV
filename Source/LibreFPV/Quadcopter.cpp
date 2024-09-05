@@ -157,3 +157,40 @@ void AQuadcopter::SetMouseSensitivity(double MouseDpi, double CentimetersPer360)
 void AQuadcopter::RestartRun() {
 	if (WantsRestartRun.IsBound()) WantsRestartRun.Broadcast(this);
 }
+
+
+
+
+void AQuadcopter::GamepadInput(float Input, int AxisIndex) {
+	if (Input = 0.f || IsMoveInputIgnored()) return;
+	if (bUsesLegacyRates) {
+		switch (LegacyRatesType) {
+			float AbsoluteInput = abs(Input);
+			case RATES_TYPE_BETAFLIGHT:
+				Input = applyBetaflightRates(AxisIndex, Input, AbsoluteInput);
+				break;
+			case RATES_TYPE_RACEFLIGHT:
+				Input = applyRaceFlightRates(AxisIndex, Input, AbsoluteInput);
+				break;
+			case RATES_TYPE_KISS:
+				Input = applyKissRates(AxisIndex, Input, AbsoluteInput);
+				break;
+			case RATES_TYPE_ACTUAL:
+				Input = applyActualRates(AxisIndex, Input, AbsoluteInput);
+				break;
+			case RATES_TYPE_QUICK:
+				Input = applyQuickRates(AxisIndex, Input, AbsoluteInput);
+				break;
+		}
+	}
+	else {
+		if (GamepadDeadzone(Input)) {
+			GamepadCurve(Input);
+		}
+	}
+
+	RelativeInput.Roll += Input;
+	bHasRelativeRotation = true;
+}
+
+

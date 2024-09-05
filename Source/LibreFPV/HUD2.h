@@ -15,28 +15,28 @@ class SConstraintCanvas;
 class SQuadcopterSettingsWidget;
 class UInputComponent;
 class UTextureRenderTarget2D;
-
-USTRUCT(BlueprintType)
-struct FWaypoint {
-	GENERATED_BODY()
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FVector Location;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FVector Direction;
-
-	FWaypoint() {
-		Location = FVector::ZeroVector;
-		Direction = FVector::ZeroVector;
-	}
-	FWaypoint(const AActor& A) {
-		Location = A.GetActorLocation();
-		Direction = A.GetActorForwardVector();
-	}
-	FWaypoint(const ACheckpoint& A) {
-		Location = A.CheckpointBeacon->GetComponentLocation();
-		Direction = A.CheckpointArrow->GetForwardVector();
-	}
-};
+//
+//USTRUCT(BlueprintType)
+//struct FWaypoint {
+//	GENERATED_BODY()
+//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	FVector Location;
+//	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+//	FVector Direction;
+//
+//	FWaypoint() {
+//		Location = FVector::ZeroVector;
+//		Direction = FVector::ZeroVector;
+//	}
+//	FWaypoint(const AActor& A) {
+//		Location = A.GetActorLocation();
+//		Direction = A.GetActorForwardVector();
+//	}
+//	FWaypoint(const ACheckpoint& A) {
+//		Location = A.CheckpointBeacon->GetComponentLocation();
+//		Direction = A.CheckpointArrow->GetForwardVector();
+//	}
+//};
 class LIBREFPV_API SCheckpointSplit : public SCompoundWidget {
 public:
 	SLATE_BEGIN_ARGS(SCheckpointSplit) {
@@ -77,10 +77,10 @@ public:
 	FNumberFormattingOptions NumberFormat;
 
 	bool bShowCheckpointMarkers;
-	FWaypoint CurrentCheckpoint;
-	FWaypoint NextCheckpoint;
+	ACheckpoint* CurrentCheckpoint;
+	ACheckpoint* NextCheckpoint;
 	FVector2D RectagleSize;
-	void DrawCheckpointMarker(FWaypoint& Checkpoint, bool bIsGrey = false);
+	void DrawCheckpointMarker(ACheckpoint& Checkpoint, bool bIsGrey = false);
 
 	void ToggleEscapeMenu();
 	bool bEscapeMenuIsOpen;
