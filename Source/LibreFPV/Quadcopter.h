@@ -37,6 +37,8 @@ class LIBREFPV_API AQuadcopter : public APawn{
 	GENERATED_BODY()
 public:
 	AQuadcopter();
+	virtual void PostInitializeComponents() override;
+
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -93,8 +95,13 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FWantsRestartRun	WantsRestartRun;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bUsesLegacyRates;
-	ratesType_e LegacyRatesType;
-	void GamepadInput(float Input, int AxisIndex);
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ULegacyRates* LegacyRates;
+	
+	void GamepadInput(float& Input, int AxisIndex);
 
+	UFUNCTION(BlueprintCallable)
+	void RunDebugFunction();
 };

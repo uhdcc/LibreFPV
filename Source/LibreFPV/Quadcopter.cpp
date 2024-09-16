@@ -4,6 +4,8 @@
 #include "Quadcopter.h"
 #include "Camera/CameraComponent.h"
 #include "Components/BoxComponent.h"
+#include "GameStateBase2.h"
+#include "PlayerConfig.h"
 
 AQuadcopter::AQuadcopter() {
 	PrimaryActorTick.bCanEverTick = true;
@@ -12,9 +14,9 @@ AQuadcopter::AQuadcopter() {
 	QuadcopterCollision->SetBoxExtent(FVector(38.f, 38.f, 3.5f));
 	QuadcopterCollision->SetCollisionProfileName("BlockAllDynamic");
 	QuadcopterCollision->SetSimulatePhysics(true);
-	QuadcopterCollision->SetLinearDamping(1.f);
+	QuadcopterCollision->SetLinearDamping(1.5f);
 	QuadcopterCollision->SetMassOverrideInKg(NAME_None, 1.f, true);
-	QuadcopterCollision->SetCenterOfMass(FVector(0.f, 0.f, 3.f));
+	//QuadcopterCollision->SetCenterOfMass(FVector(0.f, 0.f, 3.f));
 	QuadcopterCollision->GetBodyInstance()->PositionSolverIterationCount = 16;
 	QuadcopterCollision->GetBodyInstance()->VelocitySolverIterationCount = 8;
 	QuadcopterCollision->GetBodyInstance()->InertiaTensorScale = FVector::ZeroVector;
@@ -41,10 +43,15 @@ AQuadcopter::AQuadcopter() {
 	bHasRelativeRotation = false;
 	MaxSpeed = 2000.f;
 	ThrusterDistance = 7.f;
-	SetMouseSensitivity(800.0, 8.0);
+	SetMouseSensitivity(800.0, 8.0); 
 	InitialLocation = FVector::ZeroVector;
 	InitialRotation = FRotator::ZeroRotator;
 	ThrusterOffset = -2.f;
+	LegacyRates = nullptr;
+}
+void AQuadcopter::PostInitializeComponents() {
+	Super::PostInitializeComponents();
+	LegacyRates = NewObject<ULegacyRates>();
 }
 void AQuadcopter::BeginPlay() {
 	Super::BeginPlay();	
@@ -84,8 +91,22 @@ void AQuadcopter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	PlayerInputComponent->BindAxis("MousePitch", this, &AQuadcopter::MousePitch);
 	PlayerInputComponent->BindAxis("MouseRoll", this, &AQuadcopter::MouseRoll);
 	PlayerInputComponent->BindAction("RestartRun", IE_Pressed, this, &AQuadcopter::RestartRun);
+	PlayerInputComponent->BindAction("RunDebugFunction", IE_Pressed, this, &AQuadcopter::RunDebugFunction);
+
 }
 void AQuadcopter::Throttle(float Input) {
+		for (int i = 0; i < THROTTLE_LOOKUP_LENGTH; i++) {
+		const int16_t tmp = 10 * i - LegacyRates->currentControlRateProfile.thrMid8;
+		uint8_t y = 1;
+		if (tmp > 0)
+			y = 100 - LegacyRates->currentControlRateProfile.thrMid8;
+		if (tmp < 0)
+			y = LegacyRates->currentControlRateProfile.thrMid8;
+		LegacyRates->lookupThrottleRC[i] = 10 * LegacyRates->currentControlRateProfile.thrMid8 + tmp * (100 - LegacyRates->currentControlRateProfile.thrExpo8 + (int32_t)LegacyRates->currentControlRateProfile.thrExpo8 * (tmp * tmp) / (y * y)) / 10;
+		LegacyRates->lookupThrottleRC[i] = PWM_RANGE_MIN + PWM_RANGE * LegacyRates->lookupThrottleRC[i] / 1000; // [MINTHROTTLE;MAXTHROTTLE]
+	}
+
+	//QuadcopterCollision->SetLinearDamping(FMath::Min(1.0f, Input + 0.8f));
 	if (!IsMoveInputIgnored()) {
 		GamepadDeadzone(Input);
 		ThrottleInput = Input;
@@ -95,31 +116,13 @@ void AQuadcopter::Throttle(float Input) {
 	}
 }
 void AQuadcopter::Pitch(float Input) {
-	if (Input != 0.f && !IsMoveInputIgnored()) {
-		if (GamepadDeadzone(Input)) {
-			GamepadCurve(Input);
-			RelativeInput.Pitch += Input;
-			bHasRelativeRotation = true;
-		}
-	}
+	GamepadInput(Input, 0);
 }
 void AQuadcopter::Yaw(float Input) {
-	if (Input != 0.f && !IsMoveInputIgnored()) {
-		if (GamepadDeadzone(Input)) {
-			GamepadCurve(Input);
-			RelativeInput.Yaw += Input;
-			bHasRelativeRotation = true;
-		}
-	}
+	GamepadInput(Input,1);
 }
 void AQuadcopter::Roll(float Input) {
-	if (Input != 0.f && !IsMoveInputIgnored()) {
-		if (GamepadDeadzone(Input)) {
-			GamepadCurve(Input);
-			RelativeInput.Roll += Input;
-			bHasRelativeRotation = true;
-		}
-	}
+	GamepadInput(Input, 2);
 }
 void AQuadcopter::KeyboardYaw(float Input) {
 	if (Input != 0.f && !IsMoveInputIgnored()) {
@@ -153,44 +156,56 @@ void AQuadcopter::GamepadCurve(float& AxisInput) {
 void AQuadcopter::SetMouseSensitivity(double MouseDpi, double CentimetersPer360) {
 	MouseSensitivity = 360.0 / MouseDpi / CentimetersPer360 * 2.54;
 }
-
 void AQuadcopter::RestartRun() {
 	if (WantsRestartRun.IsBound()) WantsRestartRun.Broadcast(this);
 }
+void AQuadcopter::GamepadInput(float& Input, int AxisIndex) {
+	if (Input == 0.f || IsMoveInputIgnored()) return;
+	GamepadDeadzone(Input);
 
+	//for (int i = 0; i < THROTTLE_LOOKUP_LENGTH; i++) {
+	//	const int16_t tmp = 10 * i - LegacyRates->currentControlRateProfile.thrMid8;
+	//	uint8_t y = 1;
+	//	if (tmp > 0)
+	//		y = 100 - LegacyRates->currentControlRateProfile.thrMid8;
+	//	if (tmp < 0)
+	//		y = LegacyRates->currentControlRateProfile.thrMid8;
+	//	LegacyRates->lookupThrottleRC[i] = 10 * LegacyRates->currentControlRateProfile.thrMid8 + tmp * (100 - LegacyRates->currentControlRateProfile.thrExpo8 + (int32_t)LegacyRates->currentControlRateProfile.thrExpo8 * (tmp * tmp) / (y * y)) / 10;
+	//	LegacyRates->lookupThrottleRC[i] = PWM_RANGE_MIN + PWM_RANGE * LegacyRates->lookupThrottleRC[i] / 1000; // [MINTHROTTLE;MAXTHROTTLE]
+	//}
 
-
-
-void AQuadcopter::GamepadInput(float Input, int AxisIndex) {
-	if (Input = 0.f || IsMoveInputIgnored()) return;
-	if (bUsesLegacyRates) {
-		switch (LegacyRatesType) {
-			float AbsoluteInput = abs(Input);
-			case RATES_TYPE_BETAFLIGHT:
-				Input = applyBetaflightRates(AxisIndex, Input, AbsoluteInput);
-				break;
-			case RATES_TYPE_RACEFLIGHT:
-				Input = applyRaceFlightRates(AxisIndex, Input, AbsoluteInput);
-				break;
-			case RATES_TYPE_KISS:
-				Input = applyKissRates(AxisIndex, Input, AbsoluteInput);
-				break;
-			case RATES_TYPE_ACTUAL:
-				Input = applyActualRates(AxisIndex, Input, AbsoluteInput);
-				break;
-			case RATES_TYPE_QUICK:
-				Input = applyQuickRates(AxisIndex, Input, AbsoluteInput);
-				break;
-		}
+	float AbsoluteInput = abs(Input);
+	switch (LegacyRates->currentControlRateProfile.rates_type) {
+		case RATES_TYPE_BETAFLIGHT:
+			Input = LegacyRates->applyBetaflightRates(AxisIndex, Input, AbsoluteInput);
+			break;
+		case RATES_TYPE_RACEFLIGHT:
+			Input = LegacyRates->applyRaceFlightRates(AxisIndex, Input, AbsoluteInput);
+			break;
+		case RATES_TYPE_KISS:
+			Input = LegacyRates->applyKissRates(AxisIndex, Input, AbsoluteInput);
+			break;
+		case RATES_TYPE_ACTUAL:
+			Input = LegacyRates->applyActualRates(AxisIndex, Input, AbsoluteInput);
+			break;
+		case RATES_TYPE_QUICK:
+			Input = LegacyRates->applyQuickRates(AxisIndex, Input, AbsoluteInput);
+			break;
 	}
-	else {
-		if (GamepadDeadzone(Input)) {
-			GamepadCurve(Input);
-		}
+	switch(AxisIndex){
+		case 0:
+			RelativeInput.Pitch += Input;
+			break;
+		case 1:
+			RelativeInput.Yaw += Input;
+			break;
+		case 2:
+			RelativeInput.Roll += Input;
+			break;
 	}
-
-	RelativeInput.Roll += Input;
 	bHasRelativeRotation = true;
 }
 
-
+void AQuadcopter::RunDebugFunction() {
+	UPlayerConfig::LoadPlayerConfig(*this, *GetController<APlayerController>());
+}

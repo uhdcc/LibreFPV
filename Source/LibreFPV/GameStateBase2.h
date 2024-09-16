@@ -8,6 +8,8 @@
 
 class ACheckpoint;
 class AQuadcopter;
+class APlayerState2;
+class UPlayerConfig;
 
 UCLASS()
 class LIBREFPV_API AGameStateBase2 : public AGameStateBase
@@ -16,6 +18,7 @@ class LIBREFPV_API AGameStateBase2 : public AGameStateBase
 public:
 	AGameStateBase2();
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
 
 	UFUNCTION()
 	void OnOverlap(
@@ -46,4 +49,13 @@ public:
 	UFUNCTION()
 	virtual void OnRep_StartingBlocks();
 	bool bReceivedStartingBlocks;
+
+	uint8 bPreviousCheckpointColor : 1;
+	FRay CurrentCheckpointRay;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	AQuadcopter* LocalQuadcopter;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	APlayerState2* LocalPlayerState;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPlayerConfig* LocalPlayerConfig;
 };

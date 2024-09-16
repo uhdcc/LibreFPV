@@ -6,7 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "Checkpoint.generated.h"
 
-class UBoxComponent;
+//class UBoxComponent;
 class UArrowComponent;
 class UTextRenderComponent;
 
@@ -33,10 +33,10 @@ public:
 
 #endif // WITH_EDITOR
 
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	//USceneComponent* CheckpointBeacon;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	USceneComponent* CheckpointBeacon;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UBoxComponent* CheckpointTrigger;
+	UStaticMeshComponent* CheckpointTrigger;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UStaticMeshComponent* CheckpointModel;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -47,6 +47,17 @@ public:
 	void SetCheckpointIndex(int NewIndex);
 	UFUNCTION(BlueprintCallable)
 	int GetCheckpointIndex() { return CheckpointIndex; };
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UMaterialInstanceDynamic* CheckpointTriggerGlow;
+
+	void SetHasObserver();
+	void SetTriggerColor(const FLinearColor& NewTriggerColor);
+	void MarkAsCurrentCheckpoint();
+	void MarkAsNextCheckpoint();
+	void MarkAsDormantCheckpoint();
+	void OnRestartTrack();
+
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	int CheckpointIndex;

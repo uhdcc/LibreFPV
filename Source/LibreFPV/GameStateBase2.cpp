@@ -15,69 +15,43 @@
 #include "Widgets/Layout/SConstraintCanvas.h"
 #include "Templates\SharedPointer.h"
 #include "Components/BoxComponent.h"
+
+#include "PlayerConfig.h"
+
 #include "D:\Apps\Epic Games\UE_4.27\Engine\Plugins\AI\UE4ML\Source\UE4ML\Public\4MLJson.h"
 
+#include "Camera/CameraComponent.h"
+
+
 AGameStateBase2::AGameStateBase2() {
+	PrimaryActorTick.bCanEverTick = true;
+	SetActorTickEnabled(false);
+
 	TotalNumberOfCheckpoints = 0;
 	bResetTrack = false;
 	bReceivedCheckpoints = false;
 	bReceivedStartingBlocks = false;
+	bPreviousCheckpointColor = false;
+	LocalQuadcopter = nullptr;
+	LocalPlayerState = nullptr;
+
+	LocalPlayerConfig = NewObject<UPlayerConfig>(this, "LocalPlayerConfig");
 }
 void AGameStateBase2::BeginPlay() {
 	Super::BeginPlay();
-	auto ConfigFilePath = FPaths::ProjectConfigDir() / (TEXT("GameConfig.txt"));
-	FString PlayerName = "DefaultPlayer";
-	double JsonValue = 69.0;
-
-	if (!FPaths::FileExists(ConfigFilePath)) {
-		TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
-		JsonObject->SetStringField("StartupPlayer", PlayerName);
-		FString ConfigJsonString;
-		TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&ConfigJsonString);
-		FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
-		FFileHelper::SaveStringToFile(ConfigJsonString, *ConfigFilePath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
-	}
-	else {
-		FString FileString;
-		if (FFileHelper::LoadFileToString(FileString, *ConfigFilePath)) {
-			TSharedPtr< FJsonObject > JsonObject;
-			TSharedRef< TJsonReader<> > JsonReader = TJsonReaderFactory<>::Create(FileString);
-			if (FJsonSerializer::Deserialize(JsonReader, JsonObject) && JsonObject.IsValid()) {
-				PlayerName = JsonObject->GetStringField(TEXT("StartupPlayer"));
-			}
+}
+void AGameStateBase2::Tick(float DeltaTime) {
+	Super::Tick(DeltaTime);
+		auto DotProduct = FVector::DotProduct(
+			CurrentCheckpointRay.Origin - LocalQuadcopter->GetActorLocation(),
+			CurrentCheckpointRay.Direction
+		);
+		if ((DotProduct > 0.f) != bPreviousCheckpointColor) {
+			Checkpoints[LocalPlayerState->CurrentCheckpointIndex]->SetTriggerColor(
+				bPreviousCheckpointColor ? FLinearColor::Red : FLinearColor::Green
+			);
+			bPreviousCheckpointColor = !bPreviousCheckpointColor;
 		}
-	}
-	ConfigFilePath = FPaths::ProjectConfigDir() / "PlayerConfigs" / (TEXT("%s"), PlayerName + ".txt");
-	if (!FPaths::FileExists(ConfigFilePath)) {
-		TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
-		//AQuadcopter* Quadcopter;
-		//JsonObject->SetStringField("BetaflightRates", F4ML::StructToJsonString<FGamepadProperties>(FGamepadProperties()));
-		auto GamepadProps = FGamepadProperties();
-		TSharedPtr<FJsonObject> GamepadPropertiesJson = MakeShareable(new FJsonObject);
-		GamepadPropertiesJson->SetNumberField("Speed", GamepadProps.Speed);
-		GamepadPropertiesJson->SetNumberField("Precision", GamepadProps.Precision);
-		GamepadPropertiesJson->SetNumberField("Transition", GamepadProps.Transition);
-		GamepadPropertiesJson->SetNumberField("Deadzone", GamepadProps.Deadzone);
-
-		JsonObject->SetObjectField(TEXT("GamepadProperties"), GamepadPropertiesJson);
-		JsonObject->SetNumberField(TEXT("FieldOfView"), 130.0);
-		FString ConfigJsonString;
-		TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&ConfigJsonString);
-		FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
-		FFileHelper::SaveStringToFile(ConfigJsonString, *ConfigFilePath, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
-	}
-	else {
-		FString FileString;
-		if (FFileHelper::LoadFileToString(FileString, *ConfigFilePath)) {
-			TSharedPtr< FJsonObject > JsonObject;
-			TSharedRef< TJsonReader<> > JsonReader = TJsonReaderFactory<>::Create(FileString);
-			if (FJsonSerializer::Deserialize(JsonReader, JsonObject) && JsonObject.IsValid()) {
-				if (JsonObject->TryGetNumberField(TEXT("FieldOfView"), JsonValue)) {
-					GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, LexToString(JsonValue));
-				}
-			}
-		}
-	}
 }
 void AGameStateBase2::OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
 	// if this is a valid player...
@@ -89,6 +63,7 @@ void AGameStateBase2::OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor
 				if (CheckpointIndex == PlayerState->CurrentCheckpointIndex) {
 					if (FVector::DotProduct(Checkpoint->CheckpointTrigger->GetForwardVector(), OtherActor->GetVelocity().GetSafeNormal()) > 0.f) {
 						Checkpoint->CheckpointTrigger->SetHiddenInGame(true);
+						Checkpoint->SetTriggerColor(FLinearColor::Gray);
 						auto SplitTime = 0.f;
 						auto SplitDifference = 0.f;
 						// first checkpoint
@@ -116,13 +91,19 @@ void AGameStateBase2::OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor
 						// play sound
 						UGameplayStatics::PlaySound2D(PlayerState, PlayerState->CheckpointSound);
 						// increment indexes
-						// todo fix this
-						Checkpoints[PlayerState->CurrentCheckpointIndex]->CheckpointTrigger->SetHiddenInGame(true);
-						Checkpoints[PlayerState->NextCheckpointIndex]->CheckpointTrigger->SetHiddenInGame(true);
 						PlayerState->CurrentCheckpointIndex = PlayerState->NextCheckpointIndex;
 						PlayerState->NextCheckpointIndex = (PlayerState->NextCheckpointIndex + 1) % TotalNumberOfCheckpoints;
-						Checkpoints[PlayerState->CurrentCheckpointIndex]->CheckpointTrigger->SetHiddenInGame(false);
 						Checkpoints[PlayerState->NextCheckpointIndex]->CheckpointTrigger->SetHiddenInGame(false);
+						CurrentCheckpointRay.Origin = Checkpoints[LocalPlayerState->CurrentCheckpointIndex]->GetActorLocation();
+						CurrentCheckpointRay.Direction = Checkpoints[LocalPlayerState->CurrentCheckpointIndex]->GetActorForwardVector();
+						auto DotProduct = FVector::DotProduct(
+							CurrentCheckpointRay.Origin - LocalQuadcopter->GetActorLocation(),
+							CurrentCheckpointRay.Direction
+						);
+						bPreviousCheckpointColor = (DotProduct > 0.f);
+						Checkpoints[LocalPlayerState->CurrentCheckpointIndex]->SetTriggerColor(
+							bPreviousCheckpointColor ? FLinearColor::Green : FLinearColor::Red
+						);
 						// update player hud
 						if (auto HUD2 = Cast<APlayerController>(OtherActor->GetInstigatorController())->GetHUD<AHUD2>()) {
 							HUD2->CurrentCheckpoint = Checkpoints[PlayerState->CurrentCheckpointIndex];
@@ -137,9 +118,8 @@ void AGameStateBase2::OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor
 }
 
 void AGameStateBase2::RestartRun(AQuadcopter* Quadcopter) {
-	if (auto PlayerState = Cast<APlayerState2>(Cast<APlayerController>(Quadcopter->GetInstigatorController())->PlayerState)) {
-		Checkpoints[PlayerState->CurrentCheckpointIndex]->CheckpointTrigger->SetHiddenInGame(true);
-		Checkpoints[PlayerState->NextCheckpointIndex]->CheckpointTrigger->SetHiddenInGame(true);
+		Checkpoints[LocalPlayerState->CurrentCheckpointIndex]->CheckpointTrigger->SetHiddenInGame(true);
+		Checkpoints[LocalPlayerState->CurrentCheckpointIndex]->SetTriggerColor(FLinearColor::Gray);
 		// set starting location and rotation
 		auto InitialLocation = FVector::ZeroVector;
 		auto InitialRotation = FRotator::ZeroRotator;
@@ -152,18 +132,14 @@ void AGameStateBase2::RestartRun(AQuadcopter* Quadcopter) {
 		Quadcopter->QuadcopterCollision->SetPhysicsLinearVelocity(FVector::ZeroVector);
 		Quadcopter->QuadcopterCollision->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
 		// initialize player state
-		PlayerState->CurrentCheckpointIndex = 0;
-		PlayerState->NextCheckpointIndex = 1;
+		LocalPlayerState->CurrentCheckpointIndex = 0;
+		LocalPlayerState->NextCheckpointIndex = 1;
 		// todo: dont use FPlatformTime (this is real-world time). Use game time instead, so higher framerates dont trigger checkpoints sooner than low framerates
-		PlayerState->RunStartTime = FPlatformTime::Seconds();
-		// initialize hud
-		Checkpoints[PlayerState->CurrentCheckpointIndex]->CheckpointTrigger->SetHiddenInGame(false);
-		Checkpoints[PlayerState->NextCheckpointIndex]->CheckpointTrigger->SetHiddenInGame(false);
-		if (auto HUD2 = Cast<APlayerController>(Quadcopter->GetInstigatorController())->GetHUD<AHUD2>()) {
-			HUD2->CurrentCheckpoint = Checkpoints[PlayerState->CurrentCheckpointIndex];
-			HUD2->NextCheckpoint = Checkpoints[PlayerState->NextCheckpointIndex];
-		}
-	}
+		LocalPlayerState->RunStartTime = FPlatformTime::Seconds();
+		Checkpoints[LocalPlayerState->CurrentCheckpointIndex]->CheckpointTrigger->SetHiddenInGame(false);
+		Checkpoints[LocalPlayerState->NextCheckpointIndex]->CheckpointTrigger->SetHiddenInGame(false);
+		CurrentCheckpointRay.Origin = Checkpoints[LocalPlayerState->CurrentCheckpointIndex]->GetActorLocation();
+		CurrentCheckpointRay.Direction = Checkpoints[LocalPlayerState->CurrentCheckpointIndex]->GetActorForwardVector();
 }
 void AGameStateBase2::OnRep_bResetTrack() {
 	if (bResetTrack && bReceivedCheckpoints && bReceivedStartingBlocks) {
@@ -175,19 +151,32 @@ void AGameStateBase2::OnRep_bResetTrack() {
 			TotalNumberOfCheckpoints = Checkpoints.Num();
 			if (TotalNumberOfCheckpoints > 1) {
 				// bind to checkpoints
+				UMaterial* CheckpointGlowMaterial = nullptr;
 				for (auto i : Checkpoints) {
+					if (!i->CheckpointTriggerGlow) {
+						if (!CheckpointGlowMaterial) {
+							CheckpointGlowMaterial = LoadObject<UMaterial>(
+								nullptr,
+								TEXT("Material'/Game/Checkpoints/CheckpointAssets/CheckpointTriggerMaterial.CheckpointTriggerMaterial'")
+							);
+						}
+						i->CheckpointTriggerGlow = i->CheckpointTrigger->CreateAndSetMaterialInstanceDynamicFromMaterial(0,CheckpointGlowMaterial);
+						i->SetTriggerColor(FLinearColor::Gray);
+					}
 					i->CheckpointTrigger->OnComponentBeginOverlap.AddDynamic(this, &AGameStateBase2::OnOverlap);
+					//i->SetHasObserver();
 				}
-				// initialize huds
-				for (TActorIterator<AHUD2> i(World); i; ++i) {
-					// todo : some of this stuff is redundant now that i made RestartRun()
-					i->CurrentCheckpoint = Checkpoints[0];
-					i->NextCheckpoint = Checkpoints[1];
-					// initialize quadcopters
-					if (auto Quadcopter = Cast<AQuadcopter>(i->GetOwningPawn())) {
-						i->bShowCheckpointMarkers = true;
-						Quadcopter->WantsRestartRun.AddDynamic(this, &AGameStateBase2::RestartRun);
-						RestartRun(Quadcopter);
+				// initialize players
+				for (TActorIterator<APlayerController> i(World); i; ++i) {
+					if (i->IsLocalPlayerController()) {
+						if (auto Quadcopter = Cast<AQuadcopter>(i->GetPawn())) {
+							LocalPlayerState = Cast<APlayerState2>(i->PlayerState);
+							LocalQuadcopter = Quadcopter;
+							Quadcopter->WantsRestartRun.AddDynamic(this, &AGameStateBase2::RestartRun);
+							LocalPlayerConfig->LoadPlayerConfig(*LocalQuadcopter, **i);
+							RestartRun(Quadcopter);
+							break;
+						}
 					}
 				}
 			}

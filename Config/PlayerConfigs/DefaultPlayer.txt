@@ -1,10 +1,17 @@
 {
-	"GamepadProperties":
+	"FieldOfView": 130,
+	"CameraAngle": 55,
+	"MouseSensitivity": 0.14999999999999999,
+	"Rates":
 	{
-		"Speed": 475,
-		"Precision": 0.60000002384185791,
-		"Transition": 0.30000001192092896,
-		"Deadzone": 0.05000000074505806
+		"RatesType 0 = Betaflight, 1 = RaceFlight, 2 = Kiss, 3 = Actual, 4 = Quick": 0,
+		"RC Rate": "[0, 0, 0]",
+		"Super Rate": "[0, 0, 0]",
+		"RC Expo": "[0, 0, 0]"
 	},
-	"FieldOfView": 130
+	"Keybinds":
+	{
+		"RestartRun": "GenericUSBController_Button5",
+		"EscapeMenu": "Escape"
+	}
 }

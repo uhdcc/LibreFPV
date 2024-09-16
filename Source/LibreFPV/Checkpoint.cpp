@@ -2,25 +2,22 @@
 
 
 #include "Checkpoint.h"
-#include "Components/BoxComponent.h"
 #include "Components/ArrowComponent.h"
 #include "EngineUtils.h"
 #include "Components/TextRenderComponent.h"
 
 ACheckpoint::ACheckpoint() {
+	//todo : get this color from a player config
 	auto TextColor = FLinearColor(0.7f, 0.7f, 0.7f, 1.f);
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 
-	CheckpointBeacon = CreateDefaultSubobject<USceneComponent>(TEXT("CheckpointBeacon"));
-	CheckpointBeacon->SetupAttachment(RootComponent);
-
-
-	CheckpointTrigger = CreateDefaultSubobject<UBoxComponent>(TEXT("CheckpointTrigger"));
+	CheckpointTrigger = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CheckpointTrigger"));
 	CheckpointTrigger->SetupAttachment(RootComponent);
 	CheckpointTrigger->SetCollisionProfileName("OverlapAllDynamic");
 
 	CheckpointArrow = CreateDefaultSubobject<UArrowComponent>(TEXT("CheckpointArrow"));
 	CheckpointArrow->SetupAttachment(CheckpointTrigger);
+	CheckpointArrow->SetUsingAbsoluteScale(true);
 	CheckpointArrow->ArrowSize = 2.5f;
 
 	CheckpointModel = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CheckpointModel"));
@@ -35,7 +32,13 @@ ACheckpoint::ACheckpoint() {
 	CheckpointJerseyNumber->TextRenderColor = TextColor.ToFColor(false);
 	CheckpointJerseyNumber->SetHiddenInGame(true);
 	CheckpointJerseyNumber->SetUsingAbsoluteRotation(true);
-
+	CheckpointJerseyNumber->SetMaterial(
+		0,
+		LoadObject<UMaterial>(
+			nullptr,
+			TEXT("Material'/Game/Checkpoints/CheckpointAssets/JerseyMaterial.JerseyMaterial'")
+		)
+	);
 	CheckpointIndex = -1;
 }
 void ACheckpoint::BeginPlay() {
@@ -44,7 +47,22 @@ void ACheckpoint::BeginPlay() {
 }
 void ACheckpoint::PostInitializeComponents() {
 	Super::PostInitializeComponents();
+	//CheckpointJerseyNumber->SetTextMaterial(LoadObject<UMaterial>(
+	//	nullptr,
+	//	TEXT("Material'/Game/Checkpoints/CheckpointAssets/JerseyMaterial.JerseyMaterial'")
+	//));
 }
+//void ACheckpoint::Tick(float DeltaTime) {
+//	Super::Tick(DeltaTime);
+	//if (bIsCurrentCheckpoint) {
+	//	auto DotProduct = FVector::DotProduct(
+	//		GetActorLocation() - ObservingActor->GetActorLocation(),
+	//		CheckpointArrow->GetForwardVector()
+	//	);
+	//	CheckpointTriggerGlow->SetVectorParameterValue("Color", (DotProduct > 0.f) ? FLinearColor::Green : FLinearColor::Red);
+	//}
+//}
+
 void ACheckpoint::OnConstruction(const FTransform& Transform) {
 	if (auto World = GetWorld()) {
 		if (CheckpointIndex == -1) {
@@ -140,4 +158,38 @@ void ACheckpoint::ValidateCheckpointIndex() {
 				}
 			}
 		}
+}
+void ACheckpoint::SetHasObserver() {
+	CheckpointTrigger->SetMaterial(
+		0,
+		LoadObject<UMaterial>(
+			nullptr,
+			TEXT("Material'/Game/Checkpoints/CheckpointAssets/CheckpointTriggerMaterial.CheckpointTriggerMaterial'")
+		)
+	);
+	CheckpointTriggerGlow = CheckpointTrigger->CreateAndSetMaterialInstanceDynamic(0);
+	SetTriggerColor(FLinearColor::Gray);
+	CheckpointTrigger->SetHiddenInGame(true);
+}
+void ACheckpoint::SetTriggerColor(const FLinearColor& NewTriggerColor) {
+	// todo: shouldnt have to validate this, but it was crashing on startup for some reason
+	if (CheckpointTriggerGlow) {
+		CheckpointTriggerGlow->SetVectorParameterValue("Color", NewTriggerColor);
+	}
+}
+void ACheckpoint::MarkAsDormantCheckpoint() {
+	CheckpointTrigger->SetHiddenInGame(true);
+}
+
+void ACheckpoint::OnRestartTrack() {
+	//if (!CheckpointTriggerGlow) {
+	//	if (!CheckpointGlowMaterial) {
+	//		CheckpointGlowMaterial = LoadObject<UMaterial>(
+	//			nullptr,
+	//			TEXT("Material'/Game/Checkpoints/CheckpointAssets/CheckpointTriggerMaterial.CheckpointTriggerMaterial'")
+	//		);
+	//	}
+	//	i->CheckpointTriggerGlow = i->CheckpointTrigger->CreateAndSetMaterialInstanceDynamicFromMaterial(0, CheckpointGlowMaterial);
+	//}
+
 }

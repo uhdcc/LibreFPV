@@ -1,3 +1,24 @@
-{
-	"StartupPlayer": "DefaultPlayer"
-}
+Field of View = 130.000000
+Camera Angle = 55.000000
+
+Rates Type = 0
+RC Rate = 1.000000, 1.000000, 1.000000
+Super Rate = 0.700000, 0.700000, 0.700000
+RC Expo = 0.000000, 0.000000, 0.000000
+Thottle Mid = 0.500000
+Throttle Expo = 0.000000
+
+Restart Run = GenericUSBController_Button5
+-Throttle = GenericUSBController_Axis3
+Pitch = GenericUSBController_Axis1
+Yaw = GenericUSBController_Axis4
+Roll = GenericUSBController_Axis2
+
+MousePitch = MouseY
+MouseRoll = MouseX
+Mouse Sensitivity = 0.150000
+Escape Menu = Escape
+Restart Run = SpaceBar
+Throttle = W
+KeyboardYaw = D
+-KeyboardYaw = A

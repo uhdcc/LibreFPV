@@ -84,26 +84,26 @@ void AHUD2::CreateHud() {
 }
 void AHUD2::DrawCheckpointMarker(ACheckpoint& Checkpoint, bool bIsGrey) {
 	// project checkpoint location to screen
-	auto ScreenSpaceVector = Project(Checkpoint.CheckpointBeacon->GetComponentLocation());
+	//auto ScreenSpaceVector = Project(Checkpoint.CheckpointBeacon->GetComponentLocation());
 	// if checkpoint is in front of the player...
-	if (ScreenSpaceVector.Z != 0.f) {
+	//if (ScreenSpaceVector.Z != 0.f) {
 		// determine marker's color
 		bool bIsGreen = false;
 		if (!bIsGrey) {
 			auto DotProduct = FVector::DotProduct(
-				Checkpoint.CheckpointBeacon->GetComponentLocation() - GetOwningPawn()->GetActorLocation(), 
+				Checkpoint.GetActorLocation() - GetOwningPawn()->GetActorLocation(),
 				Checkpoint.CheckpointArrow->GetForwardVector()
 			);
 			bIsGreen = (DotProduct > 0.f);
 		}
 		// draw checkpoint marker
-		DrawRect(
-			bIsGrey ? FLinearColor::Gray : bIsGreen ? FLinearColor::Green : FLinearColor::Red,
-			ScreenSpaceVector.X - RectagleSize.X, ScreenSpaceVector.Y - RectagleSize.Y,
-			RectagleSize.X,
-			RectagleSize.Y
-		);
-	}
+		//DrawRect(
+		//	bIsGrey ? FLinearColor::Gray : bIsGreen ? FLinearColor::Green : FLinearColor::Red,
+		//	ScreenSpaceVector.X - RectagleSize.X, ScreenSpaceVector.Y - RectagleSize.Y,
+		//	RectagleSize.X,
+		//	RectagleSize.Y
+		//);
+	//}
 }
 void AHUD2::ToggleEscapeMenu() {
 	if (bEscapeMenuIsOpen) {
